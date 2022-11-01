@@ -13,7 +13,7 @@ import {
   TextResult,
 } from 'vision-camera-dynamsoft-barcode-reader';
 import * as REA from 'react-native-reanimated';
-import { Polygon, Text as SVGText, Svg, Rect } from 'react-native-svg';
+import {Polygon, Text as SVGText, Svg, Rect} from 'react-native-svg';
 
 const CameraQR = (): JSX.Element => {
   const [hasPermission, setHasPermission] = React.useState(false);
@@ -31,6 +31,29 @@ const CameraQR = (): JSX.Element => {
     const config: DBRConfig = {};
     config.template =
       '{"ImageParameter":{"BarcodeFormatIds":["BF_QR_CODE"],"Description":"","Name":"Settings"},"Version":"3.0"}'; //scan qrcode only
+
+    let settings;
+    if (config.template) {
+      settings = JSON.parse(config.template);
+    } else {
+      const template = `{
+      "ImageParameter": {
+        "Name": "Settings"
+      },
+      "Version": "3.0"
+    }`;
+      settings = JSON.parse(template);
+    }
+    settings['ImageParameter']['RegionDefinitionNameArray'] = ['Settings'];
+    settings['RegionDefinition'] = {
+      Left: 10,
+      Right: 90,
+      Top: 20,
+      Bottom: 65,
+      MeasuredByPercentage: 1,
+      Name: 'Settings',
+    };
+    config.template = JSON.stringify(settings);
 
     const results: TextResult[] = decode(frame, config);
     REA.runOnJS(setBarcodeResults)(results);
@@ -97,6 +120,14 @@ const CameraQR = (): JSX.Element => {
         </>
       )}
       <Svg style={StyleSheet.absoluteFill} viewBox={getViewBox()}>
+        <Rect
+          x={0.1 * getFrameSize()[0]}
+          y={0.2 * getFrameSize()[1]}
+          width={0.8 * getFrameSize()[0]}
+          height={0.45 * getFrameSize()[1]}
+          strokeWidth="2"
+          stroke="red"
+        />
         {barcodeResults.map((barcode, idx) => (
           <Polygon
             key={'poly-' + idx}
